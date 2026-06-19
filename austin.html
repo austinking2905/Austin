@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant for Physics, Maths, Chemistry & GK</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --main-bg: rgba(10, 14, 30, 0.92);
+            --panel-bg: rgba(255, 255, 255, 0.08);
+            --accent: #f89009;
+            --text: #f8f8ff;
+            --muted: #cfd8ff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text);
+            background: radial-gradient(circle at top, rgba(248, 144, 9, 0.2), transparent 28%),
+                        linear-gradient(180deg, rgba(5, 12, 30, 1), rgba(7, 18, 45, 1));
+        }
+
+        body {
+            background-image: url('rin.jpg');
+            background-size: 95% 95%;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.9));
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .hero {
+            max-width: 900px;
+            margin: 0 auto 40px;
+            padding: 32px;
+            background: rgba(11, 17, 42, 0.92);
+            border: 1px solid rgba(248, 144, 9, 0.25);
+            border-radius: 24px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: clamp(2.6rem, 4vw, 4rem);
+            letter-spacing: 0.02em;
+            line-height: 1.05;
+        }
+
+        .hero p {
+            margin: 20px auto 0;
+            max-width: 760px;
+            font-size: 1.15rem;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .cards {
+            display: grid;
+            gap: 20px;
+            width: min(100%, 1120px);
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        }
+
+        .card {
+            background: var(--panel-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 24px;
+            text-align: left;
+            backdrop-filter: blur(12px);
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(248, 144, 9, 0.45);
+            box-shadow: 0 20px 50px rgba(248, 144, 9, 0.12);
+        }
+
+        .card h2 {
+            margin: 0 0 12px;
+            font-size: 1.45rem;
+            color: var(--text);
+        }
+
+        .card p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        .footer {
+            margin-top: 40px;
+            color: rgba(248, 144, 9, 0.8);
+            font-size: 0.95rem;
+        }
+
+        .corner-image {
+            position: absolute;
+            bottom: 0;
+            width: 320px;
+            max-width: 38vw;
+            height: auto;
+            z-index: 0;
+            opacity: 0.92;
+        }
+
+        .corner-left {
+            left: 0;
+        }
+
+        .corner-right {
+            right: 0;
+        }
+
+        @media (max-width: 760px) {
+            .hero {
+                padding: 24px;
+            }
+
+            .corner-image {
+                width: 180px;
+                max-width: 180px;
+            }
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.75);
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-card {
+            width: min(620px, 100%);
+            background: rgba(15, 21, 42, 0.98);
+            border-radius: 24px;
+            border: 1px solid rgba(248, 144, 9, 0.3);
+            padding: 28px;
+            text-align: left;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+        }
+
+        .modal-card h2 {
+            margin: 0 0 18px;
+            font-size: 2rem;
+        }
+
+        .modal-card label {
+            display: block;
+            margin-bottom: 12px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .modal-card textarea {
+            width: 100%;
+            min-height: 120px;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 14px;
+            background: rgba(255,255,255,0.05);
+            color: var(--text);
+            padding: 16px;
+            resize: vertical;
+            font-size: 1rem;
+            margin-bottom: 18px;
+        }
+
+        .modal-card button {
+            padding: 14px 22px;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #f89009, #ffb54f);
+            color: #08101f;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .modal-card button:hover {
+            transform: translateY(-2px);
+        }
+
+        .modal-card .close-btn {
+            margin-left: 16px;
+            background: transparent;
+            color: var(--text);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .answer-box {
+            margin-top: 24px;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: var(--muted);
+            min-height: 88px;
+            white-space: pre-wrap;
+            line-height: 1.75;
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay"></div>
+    <div class="page">
+        <section class="hero">
+            <h1>AI Assistant for Advanced Physics, Maths, Chemistry & General Knowledge</h1>
+            <p>Learn faster with a smart study companion designed for higher-level science and GK topics. Get clear explanations, useful examples, and concise concepts for exams, projects, and curiosity.</p>
+        </section>
+
+        <div class="cards">
+            <article class="card" data-subject="Physics">
+                <h2>Physics</h2>
+                <p>Understand mechanics, electricity, optics, thermodynamics, and modern physics with step-by-step clarity and real-world applications.</p>
+            </article>
+            <article class="card" data-subject="Mathematics">
+                <h2>Mathematics</h2>
+                <p>Master algebra, calculus, trigonometry, geometry, and advanced problem solving with explanations tailored to your level.</p>
+            </article>
+            <article class="card" data-subject="Chemistry">
+                <h2>Chemistry</h2>
+                <p>Explore chemical reactions, atomic structure, organic chemistry, and analytical methods with simple, powerful examples.</p>
+            </article>
+            <article class="card" data-subject="General Knowledge">
+                <h2>General Knowledge</h2>
+                <p>Build strong GK foundation in science, history, geography, and current affairs with quick facts and useful summaries.</p>
+            </article>
+        </div>
+
+        <div class="footer">Your intelligent study partner, ready to help with advanced topics and clear explanations.</div>
+    </div>
+
+    <div class="modal" id="questionModal">
+        <div class="modal-card">
+            <h2 id="modalTitle">Ask a question</h2>
+            <label for="questionInput">Enter your question for <span id="subjectName">Subject</span>:</label>
+            <textarea id="questionInput" placeholder="Type your question here..."></textarea>
+            <div>
+                <button id="askButton">Ask</button>
+                <button class="close-btn" id="closeButton" type="button">Close</button>
+            </div>
+            <div class="answer-box" id="answerBox">Your answer will appear here.</div>
+        </div>
+    </div>
+
+    <img src="obito.jpg" alt="Obito" class="corner-image corner-left">
+    <img src="kka.jpg" alt="Kakashi" class="corner-image corner-right">
+
+    <script>
+        const cards = document.querySelectorAll('.card');
+        const modal = document.getElementById('questionModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const subjectName = document.getElementById('subjectName');
+        const questionInput = document.getElementById('questionInput');
+        const askButton = document.getElementById('askButton');
+        const closeButton = document.getElementById('closeButton');
+        const answerBox = document.getElementById('answerBox');
+
+        let currentSubject = '';
+
+        const answers = {
+            Physics: 'Physics answer: Think about the core principles and break the problem into smaller steps. Use formulas carefully and verify your units.',
+            Mathematics: 'Mathematics answer: Translate the problem into equations, solve methodically, and check each step for arithmetic and algebraic consistency.',
+            Chemistry: 'Chemistry answer: Consider the molecular behavior, reaction types, and conservation of mass when composing your answer.',
+            'General Knowledge': 'General Knowledge answer: Gather reliable facts, compare sources, and present the key point clearly with context.'
+        };
+
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                currentSubject = card.dataset.subject;
+                subjectName.textContent = currentSubject;
+                modalTitle.textContent = `Ask a ${currentSubject} question`;
+                questionInput.value = '';
+                answerBox.textContent = 'Your answer will appear here.';
+                modal.classList.add('open');
+                questionInput.focus();
+            });
+        });
+
+        closeButton.addEventListener('click', () => {
+            modal.classList.remove('open');
+        });
+
+        askButton.addEventListener('click', () => {
+            const question = questionInput.value.trim();
+            if (!question) {
+                answerBox.textContent = 'Please type your question before asking.';
+                return;
+            }
+            answerBox.textContent = `Subject: ${currentSubject}\nQuestion: ${question}\n\n${answers[currentSubject]}`;
+        });
+
+        window.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                modal.classList.remove('open');
+            }
+        });
+    </script>
+</body>
+</html>
